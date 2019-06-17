@@ -33,7 +33,7 @@ final class EditScanViewController: UIViewController {
     lazy private var nextButton: UIBarButtonItem = {
         let title = NSLocalizedString("wescan.edit.button.next", tableName: nil, bundle: Bundle(for: EditScanViewController.self), value: "Next", comment: "A generic next button")
         let button = UIBarButtonItem(title: title, style: .plain, target: self, action: #selector(pushReviewController))
-        button.tintColor = navigationController?.navigationBar.tintColor
+        button.tintColor = .white
         return button
     }()
 
@@ -69,8 +69,8 @@ final class EditScanViewController: UIViewController {
         navigationItem.rightBarButtonItem = nextButton
         
         zoomGestureController = ZoomGestureController(image: image, quadView: quadView)
-        
-        let touchDown = UILongPressGestureRecognizer(target: zoomGestureController, action: #selector(zoomGestureController.handle(pan:)))
+         UINavigationBar.appearance().tintColor = UIColor.white
+        let touchDown = UILongPressGestureRecognizer(target:zoomGestureController, action: #selector(zoomGestureController.handle(pan:)))
         touchDown.minimumPressDuration = 0
         view.addGestureRecognizer(touchDown)
     }
