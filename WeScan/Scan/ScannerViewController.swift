@@ -9,12 +9,16 @@
 import UIKit
 import AVFoundation
 
+
+public protocol ScannerViewControllerDelegate:AnyObject {
+    func skipLoadSlip() 
+}
 /// The `ScannerViewController` offers an interface to give feedback to the user regarding quadrilaterals that are detected. It also gives the user the opportunity to capture an image with a detected rectangle.
 final class ScannerViewController: UIViewController {
     
     private var captureSessionManager: CaptureSessionManager?
     private let videoPreviewLayer = AVCaptureVideoPreviewLayer()
-    
+    weak var delegate : ScannerViewControllerDelegate?
     /// The view that shows the focus rectangle (when the user taps to focus, similar to the Camera app)
     private var focusRectangle: FocusRectangleView!
     
@@ -37,11 +41,11 @@ final class ScannerViewController: UIViewController {
         return button
     }()
     
-    lazy private var cancelButton: UIButton = {
+    lazy private var skipButton: UIButton = {
         let button = UIButton()
-        button.setTitle(NSLocalizedString("wescan.scanning.cancel", tableName: nil, bundle: Bundle(for: ScannerViewController.self), value: "Cancel", comment: "The cancel button"), for: .normal)
+        button.setTitle("Skip", for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(self, action: #selector(cancelImageScannerController), for: .touchUpInside)
+        button.addTarget(self, action: #selector(skipSlipImage), for: .touchUpInside)
         return button
     }()
     
@@ -61,10 +65,9 @@ final class ScannerViewController: UIViewController {
         return button
     }()
     
-    lazy private var flashButton: UIBarButtonItem = {
-        let image = UIImage(named: "flash", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
-        let button = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(toggleFlash))
-        button.tintColor = .white
+    lazy private var newCancelButton: UIBarButtonItem = {
+      
+         let button = UIBarButtonItem(title: "< Cancel", style: .plain, target: self, action: #selector(cancelImageScannerController))
         
         return button
     }()
@@ -144,21 +147,21 @@ final class ScannerViewController: UIViewController {
         quadView.translatesAutoresizingMaskIntoConstraints = false
         quadView.editable = false
         view.addSubview(quadView)
-        view.addSubview(cancelButton)
+        view.addSubview(skipButton)
         view.addSubview(shutterButton)
         view.addSubview(activityIndicator)
         view.addSubview(albumButton)
     }
     
     private func setupNavigationBar() {
-        navigationItem.setLeftBarButton(flashButton, animated: false)
+        navigationItem.setLeftBarButton(newCancelButton, animated: false)
         navigationItem.setRightBarButton(autoScanButton, animated: false)
         
-        if UIImagePickerController.isFlashAvailable(for: .rear) == false {
-            let flashOffImage = UIImage(named: "flashUnavailable", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
-            flashButton.image = flashOffImage
-            flashButton.tintColor = UIColor.lightGray
-        }
+//        if UIImagePickerController.isFlashAvailable(for: .rear) == false {
+//            let flashOffImage = UIImage(named: "flashUnavailable", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
+//            flashButton.image = flashOffImage
+//            flashButton.tintColor = UIColor.lightGray
+//        }
     }
     
     private func setupConstraints() {
@@ -188,27 +191,27 @@ final class ScannerViewController: UIViewController {
         
         if #available(iOS 11.0, *) {
             cancelButtonConstraints = [
-                cancelButton.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor, constant: 24.0),
-                view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: cancelButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
+                albumButton.leftAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leftAnchor, constant: 24.0),
+                view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: albumButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
             ]
             
             let shutterButtonBottomConstraint = view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: shutterButton.bottomAnchor, constant: 8.0)
             shutterButtonConstraints.append(shutterButtonBottomConstraint)
             
             albumButtonConstraints = [
-                albumButton.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor, constant: -24.0),
-                view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: albumButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
+                skipButton.rightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.rightAnchor, constant: -24.0),
+                view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: skipButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
             ]
             
         } else {
             cancelButtonConstraints = [
-                cancelButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 24.0),
-                view.bottomAnchor.constraint(equalTo: cancelButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
+                albumButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 24.0),
+                view.bottomAnchor.constraint(equalTo: albumButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
             ]
             
             albumButtonConstraints = [
-                albumButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -24.0),
-                view.bottomAnchor.constraint(equalTo: albumButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
+                skipButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -24.0),
+                view.bottomAnchor.constraint(equalTo: skipButton.bottomAnchor, constant: (65.0 / 2) - 10.0)
             ]
             
             let shutterButtonBottomConstraint = view.bottomAnchor.constraint(equalTo: shutterButton.bottomAnchor, constant: 8.0)
@@ -277,30 +280,36 @@ final class ScannerViewController: UIViewController {
     }
     
     @objc private func toggleFlash() {
-        let state = CaptureSession.current.toggleFlash()
-        
-        let flashImage = UIImage(named: "flash", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
-        let flashOffImage = UIImage(named: "flashUnavailable", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
-        
-        switch state {
-        case .on:
-            flashEnabled = true
-            flashButton.image = flashImage
-            flashButton.tintColor = .yellow
-        case .off:
-            flashEnabled = false
-            flashButton.image = flashImage
-            flashButton.tintColor = .white
-        case .unknown, .unavailable:
-            flashEnabled = false
-            flashButton.image = flashOffImage
-            flashButton.tintColor = UIColor.lightGray
-        }
+//        let state = CaptureSession.current.toggleFlash()
+//
+//        let flashImage = UIImage(named: "flash", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
+//        let flashOffImage = UIImage(named: "flashUnavailable", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
+//
+//        switch state {
+//        case .on:
+//            flashEnabled = true
+//            flashButton.image = flashImage
+//            flashButton.tintColor = .yellow
+//        case .off:
+//            flashEnabled = false
+//            flashButton.image = flashImage
+//            flashButton.tintColor = .white
+//        case .unknown, .unavailable:
+//            flashEnabled = false
+//            flashButton.image = flashOffImage
+//            flashButton.tintColor = UIColor.lightGray
+//        }
     }
     
     @objc private func cancelImageScannerController() {
         guard let imageScannerController = navigationController as? ImageScannerController else { return }
         imageScannerController.imageScannerDelegate?.imageScannerControllerDidCancel(imageScannerController)
+    }
+    
+    @objc private func skipSlipImage() {
+        self.dismiss(animated: true) {
+            self.delegate?.skipLoadSlip()
+        }
     }
     
     @objc private func importFromPhotoAlbum() {

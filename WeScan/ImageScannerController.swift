@@ -33,6 +33,8 @@ public protocol ImageScannerControllerDelegate: NSObjectProtocol {
     ///   - scanner: The scanner controller object managing the scanning interface.
     ///   - error: The error that occured.
     func imageScannerController(_ scanner: ImageScannerController, didFailWithError error: Error)
+    
+    func imageScannerSkipped(_ scanner: ImageScannerController)
 }
 
 /// A view controller that manages the full flow for scanning documents.
@@ -57,8 +59,10 @@ public final class ImageScannerController: UINavigationController {
     }()
     
     public required init(image: UIImage? = nil, delegate: ImageScannerControllerDelegate? = nil) {
-        super.init(rootViewController: ScannerViewController())
-        
+        let vc = ScannerViewController()
+       
+        super.init(rootViewController: vc)
+         vc.delegate = self
         self.imageScannerDelegate = delegate
         
         UINavigationBar.appearance().tintColor = UIColor.white
@@ -129,6 +133,14 @@ public final class ImageScannerController: UINavigationController {
             self.blackFlashView.isHidden = true
         }
     }
+    
+}
+
+extension ImageScannerController : ScannerViewControllerDelegate{
+    public func skipLoadSlip() {
+        self.imageScannerDelegate?.imageScannerSkipped(self)
+    }
+    
     
 }
 
