@@ -10,11 +10,12 @@ import UIKit
 import AVFoundation
 
 
-public protocol ScannerViewControllerDelegate:AnyObject {
+public protocol ScannerViewControllerDelegate: AnyObject {
     func skipLoadSlip() 
 }
 /// The `ScannerViewController` offers an interface to give feedback to the user regarding quadrilaterals that are detected. It also gives the user the opportunity to capture an image with a detected rectangle.
 final class ScannerViewController: UIViewController {
+    public var allowSkip: Bool = true
     
     private var captureSessionManager: CaptureSessionManager?
     private let videoPreviewLayer = AVCaptureVideoPreviewLayer()
@@ -44,6 +45,10 @@ final class ScannerViewController: UIViewController {
     lazy private var skipButton: UIButton = {
         let button = UIButton()
         button.setTitle("Skip", for: .normal)
+        if(!self.allowSkip) {
+            button.setTitleColor(.gray, for: .disabled)
+            button.isEnabled = false
+        }
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(skipSlipImage), for: .touchUpInside)
         return button
@@ -61,14 +66,11 @@ final class ScannerViewController: UIViewController {
         let title = NSLocalizedString("wescan.scanning.auto", tableName: nil, bundle: Bundle(for: ScannerViewController.self), value: "Auto", comment: "The auto button state")
         let button = UIBarButtonItem(title: title, style: .plain, target: self, action: #selector(toggleAutoScan))
         button.tintColor = .white
-        
         return button
     }()
     
     lazy private var newCancelButton: UIBarButtonItem = {
-      
-         let button = UIBarButtonItem(title: "< Cancel", style: .plain, target: self, action: #selector(cancelImageScannerController))
-        
+        let button = UIBarButtonItem(title: "< Cancel", style: .plain, target: self, action: #selector(cancelImageScannerController))
         return button
     }()
     
@@ -111,7 +113,6 @@ final class ScannerViewController: UIViewController {
         navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
         navigationController?.navigationBar.addSubview(visualEffectView)
         navigationController?.navigationBar.sendSubviewToBack(visualEffectView)
-        
         navigationController?.navigationBar.barStyle = .blackTranslucent
     }
     
@@ -247,7 +248,6 @@ final class ScannerViewController: UIViewController {
         let convertedTouchPoint: CGPoint = videoPreviewLayer.captureDevicePointConverted(fromLayerPoint: touchPoint)
         
         CaptureSession.current.removeFocusRectangleIfNeeded(focusRectangle, animated: false)
-        
         focusRectangle = FocusRectangleView(touchPoint: touchPoint)
         view.addSubview(focusRectangle)
         
@@ -320,7 +320,6 @@ final class ScannerViewController: UIViewController {
             self.present(myPickerController, animated: true, completion: nil)
         }
     }
-    
 }
 
 extension ScannerViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate{
@@ -332,14 +331,12 @@ extension ScannerViewController : UIImagePickerControllerDelegate, UINavigationC
         picker.dismiss(animated: true) {
             let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage
             self.activityIndicator.stopAnimating()
-            if let image = image{
-               
+            if let image = image {
                 let editVC = EditScanViewController(image: image, quad: nil, rotateImage: false)
                 let backItem = UIBarButtonItem()
                 backItem.title = "Retake"
                 self.navigationItem.backBarButtonItem = backItem
                 self.navigationController?.pushViewController(editVC, animated: false)
-                
                 self.shutterButton.isUserInteractionEnabled = true
             }
         }
@@ -356,7 +353,6 @@ extension ScannerViewController : UIImagePickerControllerDelegate, UINavigationC
 
 extension ScannerViewController: RectangleDetectionDelegateProtocol {
     func captureSessionManager(_ captureSessionManager: CaptureSessionManager, didFailWithError error: Error) {
-        
         activityIndicator.stopAnimating()
         shutterButton.isUserInteractionEnabled = true
         
@@ -377,7 +373,6 @@ extension ScannerViewController: RectangleDetectionDelegateProtocol {
         backItem.title = "Retake"
         navigationItem.backBarButtonItem = backItem
         navigationController?.pushViewController(editVC, animated: false)
-        
         shutterButton.isUserInteractionEnabled = true
     }
     
@@ -389,28 +384,19 @@ extension ScannerViewController: RectangleDetectionDelegateProtocol {
         }
         
         let portraitImageSize = CGSize(width: imageSize.height, height: imageSize.width)
-        
         let scaleTransform = CGAffineTransform.scaleTransform(forSize: portraitImageSize, aspectFillInSize: quadView.bounds.size)
         let scaledImageSize = imageSize.applying(scaleTransform)
-        
         let rotationTransform = CGAffineTransform(rotationAngle: CGFloat.pi / 2.0)
-
         let imageBounds = CGRect(origin: .zero, size: scaledImageSize).applying(rotationTransform)
-
         let translationTransform = CGAffineTransform.translateTransform(fromCenterOfRect: imageBounds, toCenterOfRect: quadView.bounds)
-        
         let transforms = [scaleTransform, rotationTransform, translationTransform]
-        
         let transformedQuad = quad.applyTransforms(transforms)
-        
         quadView.drawQuadrilateral(quad: transformedQuad, animated: true)
     }
-    
 }
+
 extension UIImage {
-    
     func fixedOrientation() -> UIImage {
-        
         if imageOrientation == UIImage.Orientation.up {
             return self
         }
@@ -458,7 +444,6 @@ extension UIImage {
         }
         
         let cgImage: CGImage = ctx.makeImage()!
-        
         return UIImage(cgImage: cgImage)
     }
 }
