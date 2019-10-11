@@ -45,12 +45,13 @@ final class ScannerViewController: UIViewController {
     lazy private var skipButton: UIButton = {
         let button = UIButton()
         button.setTitle("Skip", for: .normal)
-        if(!self.allowSkip) {
-            button.setTitleColor(.gray, for: .disabled)
-            button.isEnabled = false
-        }
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(skipSlipImage), for: .touchUpInside)
+        if(!self.allowSkip) {
+            //button.setTitleColor(.gray, for: .disabled)
+            //button.isEnabled = false
+            button.isHidden = true
+        }
         return button
     }()
     
