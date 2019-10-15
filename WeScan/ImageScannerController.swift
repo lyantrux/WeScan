@@ -76,9 +76,6 @@ public final class ImageScannerController: UINavigationController {
         super.init(rootViewController: vc)
         vc.delegate = self
         self.imageScannerDelegate = config.delegate
-        
-        UINavigationBar.appearance().tintColor = UIColor.white
-        navigationBar.isTranslucent = false
         self.view.addSubview(blackFlashView)
         setupConstraints()
         

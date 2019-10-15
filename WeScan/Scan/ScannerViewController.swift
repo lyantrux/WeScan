@@ -109,12 +109,7 @@ final class ScannerViewController: UIViewController {
         quadView.removeQuadrilateral()
         captureSessionManager?.start()
         UIApplication.shared.isIdleTimerDisabled = true
-
-        navigationController?.navigationBar.isTranslucent = true
-        navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        navigationController?.navigationBar.addSubview(visualEffectView)
-        navigationController?.navigationBar.sendSubviewToBack(visualEffectView)
-        navigationController?.navigationBar.barStyle = .blackTranslucent
+        
     }
     
     override func viewDidLayoutSubviews() {
@@ -158,12 +153,6 @@ final class ScannerViewController: UIViewController {
     private func setupNavigationBar() {
         navigationItem.setLeftBarButton(newCancelButton, animated: false)
         navigationItem.setRightBarButton(autoScanButton, animated: false)
-        
-//        if UIImagePickerController.isFlashAvailable(for: .rear) == false {
-//            let flashOffImage = UIImage(named: "flashUnavailable", in: Bundle(for: ScannerViewController.self), compatibleWith: nil)
-//            flashButton.image = flashOffImage
-//            flashButton.tintColor = UIColor.lightGray
-//        }
     }
     
     private func setupConstraints() {
