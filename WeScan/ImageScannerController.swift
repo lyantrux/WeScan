@@ -9,6 +9,18 @@
 import UIKit
 import AVFoundation
 
+public struct WeScanConfigSettings {
+    public var delegate: ImageScannerControllerDelegate?
+    public var image: UIImage?
+    public var allowSkip: Bool
+    
+    public init(delegate: ImageScannerControllerDelegate?, image: UIImage?, allowSkip: Bool) {
+        self.delegate = delegate
+        self.image = image
+        self.allowSkip = allowSkip
+    }
+}
+
 /// A set of methods that your delegate object must implement to interact with the image scanner interface.
 public protocol ImageScannerControllerDelegate: NSObjectProtocol {
     
@@ -33,6 +45,8 @@ public protocol ImageScannerControllerDelegate: NSObjectProtocol {
     ///   - scanner: The scanner controller object managing the scanning interface.
     ///   - error: The error that occured.
     func imageScannerController(_ scanner: ImageScannerController, didFailWithError error: Error)
+    
+    func imageScannerSkipped(_ scanner: ImageScannerController)
 }
 
 /// A view controller that manages the full flow for scanning documents.
@@ -56,19 +70,17 @@ public final class ImageScannerController: UINavigationController {
         return view
     }()
     
-    public required init(image: UIImage? = nil, delegate: ImageScannerControllerDelegate? = nil) {
-        super.init(rootViewController: ScannerViewController())
-        
-        self.imageScannerDelegate = delegate
-        
-        navigationBar.tintColor = .black
-        navigationBar.isTranslucent = false
+    public required init(config: WeScanConfigSettings) {
+        let vc = ScannerViewController()
+        vc.allowSkip = config.allowSkip
+        super.init(rootViewController: vc)
+        vc.delegate = self
+        self.imageScannerDelegate = config.delegate
         self.view.addSubview(blackFlashView)
         setupConstraints()
         
         // If an image was passed in by the host app (e.g. picked from the photo library), use it instead of the document scanner.
-        if let image = image {
-            
+        if let image = config.image {
             var detectedQuad: Quadrilateral?
             
             // Whether or not we detect a quad, present the edit view controller after attempting to detect a quad.
@@ -129,7 +141,12 @@ public final class ImageScannerController: UINavigationController {
             self.blackFlashView.isHidden = true
         }
     }
-    
+}
+
+extension ImageScannerController : ScannerViewControllerDelegate {
+    public func skipLoadSlip() {
+        self.imageScannerDelegate?.imageScannerSkipped(self)
+    }
 }
 
 /// Data structure containing information about a scan.
