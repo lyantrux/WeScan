@@ -36,7 +36,7 @@ final class EditScanViewController: UIViewController {
         button.tintColor = .white
         return button
     }()
-
+    
     /// The image the quadrilateral was detected on.
     private let image: UIImage
     
@@ -68,7 +68,7 @@ final class EditScanViewController: UIViewController {
         navigationItem.rightBarButtonItem = nextButton
         
         zoomGestureController = ZoomGestureController(image: image, quadView: quadView)
-         UINavigationBar.appearance().tintColor = UIColor.white
+        UINavigationBar.appearance().tintColor = UIColor.white
         let touchDown = UILongPressGestureRecognizer(target:zoomGestureController, action: #selector(zoomGestureController.handle(pan:)))
         touchDown.minimumPressDuration = 0
         view.addGestureRecognizer(touchDown)
@@ -102,7 +102,7 @@ final class EditScanViewController: UIViewController {
             view.bottomAnchor.constraint(equalTo: imageView.bottomAnchor),
             view.leadingAnchor.constraint(equalTo: imageView.leadingAnchor)
         ]
-
+        
         quadViewWidthConstraint = quadView.widthAnchor.constraint(equalToConstant: 0.0)
         quadViewHeightConstraint = quadView.heightAnchor.constraint(equalToConstant: 0.0)
         
@@ -139,7 +139,7 @@ final class EditScanViewController: UIViewController {
             "inputTopRight": CIVector(cgPoint: cartesianScaledQuad.bottomRight),
             "inputBottomLeft": CIVector(cgPoint: cartesianScaledQuad.topLeft),
             "inputBottomRight": CIVector(cgPoint: cartesianScaledQuad.topRight)
-            ])
+        ])
         
         let enhancedImage = filteredImage.applyingAdaptiveThreshold()?.withFixedOrientation()
         
@@ -159,7 +159,7 @@ final class EditScanViewController: UIViewController {
         
         navigationController?.pushViewController(reviewViewController, animated: true)
     }
-
+    
     private func displayQuad() {
         let imageSize = image.size
         let imageFrame = CGRect(origin: quadView.frame.origin, size: CGSize(width: quadViewWidthConstraint.constant, height: quadViewHeightConstraint.constant))
@@ -181,14 +181,14 @@ final class EditScanViewController: UIViewController {
     
     /// Generates a `Quadrilateral` object that's centered and one third of the size of the passed in image.
     private static func defaultQuad(forImage image: UIImage) -> Quadrilateral {
-        let topLeft = CGPoint(x: image.size.width / 3.0, y: image.size.height / 3.0)
-        let topRight = CGPoint(x: 2.0 * image.size.width / 3.0, y: image.size.height / 3.0)
-        let bottomRight = CGPoint(x: 2.0 * image.size.width / 3.0, y: 2.0 * image.size.height / 3.0)
-        let bottomLeft = CGPoint(x: image.size.width / 3.0, y: 2.0 * image.size.height / 3.0)
+        let topLeft = CGPoint(x: 20, y: 20)
+        let topRight = CGPoint(x: image.size.width - 20, y: 20)
+        let bottomRight = CGPoint(x:  image.size.width - 20, y:  image.size.height - 20)
+        let bottomLeft = CGPoint(x:20, y: image.size.height - 20)
         
         let quad = Quadrilateral(topLeft: topLeft, topRight: topRight, bottomRight: bottomRight, bottomLeft: bottomLeft)
         
         return quad
     }
-
+    
 }
