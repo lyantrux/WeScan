@@ -155,9 +155,13 @@ final class EditScanViewController: UIViewController {
         let finalImage = uiImage.withFixedOrientation()
         
         let results = ImageScannerResults(originalImage: image, scannedImage: finalImage, enhancedImage: enhancedImage, doesUserPreferEnhancedImage: false, detectedRectangle: scaledQuad)
-        let reviewViewController = ReviewViewController(results: results)
+        guard let imageScannerController = navigationController as? ImageScannerController else { return }
         
-        navigationController?.pushViewController(reviewViewController, animated: true)
+        var newResults = results
+        newResults.scannedImage = results.scannedImage.rotated(by: Measurement<UnitAngle>(value: 0, unit: .degrees)) ?? results.scannedImage
+        newResults.enhancedImage = results.enhancedImage?.rotated(by: Measurement<UnitAngle>(value: 0, unit: .degrees)) ?? results.enhancedImage
+        newResults.doesUserPreferEnhancedImage = false
+        imageScannerController.imageScannerDelegate?.imageScannerController(imageScannerController, didFinishScanningWithResults: newResults)
     }
     
     private func displayQuad() {
